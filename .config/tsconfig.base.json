@@ -1,0 +1,48 @@
+{
+  "compilerOptions": {
+    /* 基本配置 */
+    "target": "ES2022", // 编译目标 ECMAScript 版本
+    "jsx": "preserve", // Vue JSX 支持
+    "lib": ["ES2022", "DOM", "DOM.Iterable"], // 包含的库文件
+
+    "emitDecoratorMetadata": true, // 为装饰器生成元数据
+    /* 实验性功能 */
+    "experimentalDecorators": true, // 启用装饰器支持
+    "module": "ESNext", // 模块系统 (ESNext/CommonJS/UMD)
+    /* 模块解析 */
+    "moduleResolution": "Node", // 模块解析策略
+    "resolveJsonModule": true, // 允许导入 JSON 文件
+
+    /* JavaScript 支持 */
+    "allowJs": true, // 允许编译 JavaScript 文件
+    "checkJs": true, // 对 JavaScript 文件进行类型检查
+    /* 严格类型检查 */
+    "strict": true, // 启用所有严格类型检查
+    "strictBindCallApply": true, // 严格的 bind/call/apply 检查
+    "strictFunctionTypes": true, // 严格的函数类型检查
+    "strictNullChecks": true, // 严格的 null/undefined 检查
+    "strictPropertyInitialization": true, // 类属性初始化检查
+    "alwaysStrict": true, // 在严格模式下解析
+
+    "noFallthroughCasesInSwitch": true, // switch case 穿透报错
+    "noImplicitAny": true, // 禁止隐式 any 类型
+    "noImplicitReturns": true, // 函数隐式返回报错
+    "noImplicitThis": true, // 禁止隐式 this 类型
+    /* 额外检查 */
+    "noUnusedLocals": true, // 未使用的局部变量报错
+    "noUnusedParameters": true, // 未使用的参数报错
+    "useUnknownInCatchVariables": true, // catch 变量为 unknown 类型
+    "declaration": true, // 生成 .d.ts 声明文件
+    "declarationMap": true, // 为声明文件生成 source map
+    "inlineSources": true, // 将源码嵌入 source map
+    /* 输出控制 */
+    "outDir": "./dist", // 输出目录
+    "sourceMap": true, // 生成 source map
+
+    /* 其他 */
+    "esModuleInterop": true, // 兼容 CommonJS/ES 模块
+    "forceConsistentCasingInFileNames": true, // 强制文件名大小写一致
+    "isolatedModules": true, // 确保每个文件可独立编译
+    "skipLibCheck": true // 跳过库文件类型检查（提升性能）
+  }
+}

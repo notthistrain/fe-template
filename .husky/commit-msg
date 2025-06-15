@@ -1,0 +1,1 @@
+pnpm --no-install commitlint --config .config/commitlint.config.mjs --edit $1
