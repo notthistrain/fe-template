@@ -1,61 +1,69 @@
 stages:
   - lint
   - build
+  - dev
 
 variables:
   PNPM_CACHE_DIR: .pnpm-store
-  NPM_REGISTRY: 'https://registry.npmmirror.com/'
+  RPM_TOP_DIR: /tmp/rpmbuild/$CI_PROJECT_NAME
+  ARTIFACT_DIR: /var/www/repos/custom-rpms/
+  BUILD_RELEASE: "0"
 
-before_script:
-  - export BUILD_TIME=$(date +"%Y%m%d%H%M")
-  - export BUILD_VERSION=$(grep '"version":' package.json | awk -F':' '{print $2}' | tr -d ' ",')
+.before_script_template: &before_script_steps
+  before_script:
+    - export BUILD_TIME=$(date +"%Y%m%d%H%M")
+    - export BUILD_VERSION=$(grep '"version":' package.json | awk -F':' '{print $2}' | tr -d ' ",')
 
-lint:
+cache:
+  key: $CI_PROJECT_ID-pnpm-cache
+  paths:
+    - node_modules
+    - $PNPM_CACHE_DIR
+
+.lint_template: &lint_definition
   stage: lint
   script:
-    - |
-      echo "Lint code"
+    - echo "Lint code"
+    - make docker \
+        PNPM_CACHE_DIR=$PNPM_CACHE_DIR \
+        CI_PROJECT_NAME=$CI_PROJECT_NAME \
+        TARGET_IMAGE=linter
+  allow_failure: false
 
-    - |
-      docker build \
-        --build-arg BUILD_VERSION=$BUILD_VERSION \
-        --build-arg BUILD_TIME=$BUILD_TIME \
-        --build-arg PNPM_CACHE_DIR=$PNPM_CACHE_DIR \
-        --build-arg NPM_REGISTRY=$NPM_REGISTRY \
-        --cache-from $CI_PROJECT_NAME:latest \
-        --target linter \
-        -f ci/Dockerfile .
+.build_template: &build_definition
+  script:
+    - make rpm \
+        BUILD_VERSION=$BUILD_VERSION \
+        BUILD_TIME=$BUILD_TIME \
+        PNPM_CACHE_DIR=$PNPM_CACHE_DIR \
+        CI_PROJECT_NAME=$CI_PROJECT_NAME \
+        TARGET_IMAGE=nginx \
+        TARGET_TAG=${TARGET_TAG} \
+        RPM_TOP_DIR=$RPM_TOP_DIR \
+        ARTIFACT_DIR=$ARTIFACT_DIR
 
+lint:
+  <<: *before_script_steps
+  <<: *lint_definition
   rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: always
     - when: never
 
-  allow_failure: false
-
 build:
+  <<: *before_script_steps
+  <<: *build_definition
   stage: build
-  script:
-    - |
-      echo "Build version: $BUILD_VERSION"
-      echo "Build time: $BUILD_TIME"
-
-    - |
-      docker build \
-        --build-arg BUILD_VERSION=$BUILD_VERSION \
-        --build-arg BUILD_TIME=$BUILD_TIME \
-        --build-arg PNPM_CACHE_DIR=$PNPM_CACHE_DIR \
-        --build-arg NPM_REGISTRY=$NPM_REGISTRY \
-        --cache-from $CI_PROJECT_NAME:latest \
-        --target nginx \
-        -t $CI_PROJECT_NAME:$BUILD_VERSION \
-        -t $CI_PROJECT_NAME:latest \
-        -f ci/Dockerfile .
-    - docker save -o $CI_PROJECT_NAME-$BUILD_VERSION.tar $CI_PROJECT_NAME:$BUILD_VERSION
+  variables:
+    TARGET_TAG: latest
   only:
     - master
-  artifacts:
-    paths:
-      - $CI_PROJECT_NAME-*.tar
-    expire_in: 1 month
-    name: frontend-docker-image
+
+dev:
+  <<: *before_script_steps
+  <<: *build_definition
+  stage: dev
+  variables:
+    TARGET_TAG: dev
+  only:
+    - release

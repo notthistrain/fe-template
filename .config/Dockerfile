@@ -1,9 +1,10 @@
+# 第一阶段：安装依赖
 FROM node:18.20-slim AS deps
 
 ARG NPM_REGISTRY        # npm源
 ARG PNPM_CACHE_DIR      # gitlab-runner pnpm缓存
 
-WORKDIR /device-admin
+WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 
 RUN npm config set registry ${NPM_REGISTRY} && \
@@ -24,16 +25,17 @@ RUN pnpm build
 # 第四阶段：nginx
 FROM nginx:stable-alpine-slim AS nginx
 
-ARG BUILD_VERSION       # 构建版本
-ARG BUILD_TIME          # 构建时间
+ARG BUILD_VERSION				# 构建版本
+ARG BUILD_TIME					# 构建时间
 
 ENV BUILD_VERSION=${BUILD_VERSION}
 ENV BUILD_TIME=${BUILD_TIME}
 
 EXPOSE 80
 
-COPY .config/nginx.conf /etc/nginx/nginx.conf
-COPY --from=builder /device-admin/dist /usr/share/nginx/html
+RUN rm -f /etc/nginx/conf.d/*
+COPY .config/nginx.conf /etc/nginx/conf.d/
+COPY --from=builder /app/dist /usr/share/nginx/html
 RUN echo "${BUILD_VERSION}-${BUILD_TIME}" > /usr/share/nginx/html/version.txt
 
 CMD ["nginx", "-g", "daemon off;"]
